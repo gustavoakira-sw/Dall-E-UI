@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dall-E UI</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --light-background-color: #ffffff;
+            --light-text-color: #333333;
+            --light-element-color: #f8f9fa;
+
+            --dark-background-color: #333333;
+            --dark-text-color: #ffffff;
+            --dark-element-color: #262626;
+        }
+
+        body {
+            --background-color: var(--light-background-color);
+            --text-color: var(--light-text-color);
+            --element-color: var(--light-element-color);
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .form-container, .result-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: var(--element-color);
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .image-container {
+            text-align: center;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        /* Switch element for dark mode */
+        .theme-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            cursor: pointer;
+        }
+
+        .theme-switch input {
+            display: none;
+        }
+
+        .theme-switch label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            width: 70px;
+            height: 30px;
+            background: grey;
+            border-radius: 50px;
+            position: relative;
+            padding: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .theme-switch label::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 25px;
+            height: 25px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .theme-switch input:checked + label {
+            background: #00ae09;
+        }
+
+        .theme-switch input:checked + label::after {
+            left: calc(100% - 2px);
+            transform: translateX(-100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-switch">
+        <input type="checkbox" id="themeSwitch">
+        <label for="themeSwitch"></label>
+    </div>
+    <div id="app" class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 form-container">
+                <h1 class="text-center mb-4">Dall-E UI</h1>
+                <form @submit.prevent="processRequest">
+                    <div class="form-group">
+                        <label for="promptInput">Enter your prompt below and wait for Dall-E to generate an image:</label>
+                        <textarea v-model="prompt" class="form-control" id="promptInput" rows="4" placeholder="Photograph of a futuristic city..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modelSelect">Model</label>
+                        <select v-model="model" class="form-control" id="modelSelect">
+                            <option value="dall-e-2">Dall-E 2</option>
+                            <option value="dall-e-3">Dall-E 3</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sizeSelect">Size</label>
+                        <select v-model="size" class="form-control" id="sizeSelect">
+                            <option value="256x256">256x256</option>
+                            <option value="512x512">512x512</option>
+                            <option value="1024x1024">1024x1024</option>
+                        </select>
+                    </div>
+                    
+
+
+                    <div class="text-center">
+                        <button :disabled="showResult || isLoading" type="submit" class="btn btn-dark">
+                            <span v-if="!isLoading">Submit request</span>
+                            <span v-else>
+                                <span class="spinner-border spinner" role="status"></span>
+                                Loading...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div v-if="showResult" class="col-md-10 col-lg-8 result-container">
+                <div class="image-container">
+                    <img :src="imageUrl" alt="Processed Image">
+                </div>
+                <p class="text-center">Prompt: {{ prompt }}</p>
+                <p class="text-center">Image URL: <a :href="imageUrl" target="_blank">Click here for original image URL</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                prompt: '',
+                imageUrl: '',
+                showResult: false,
+                isLoading: false,
+                model: 'dall-e-3',    // default value for model dropdown
+                size: '1024x1024'     // default value for size dropdown
+            },
+            methods: {
+                processRequest() {
+                    this.isLoading = true;
+                    document.querySelector('button[type="submit"]').disabled = true;
+
+                    const API_URL = 'https://api.openai.com/v1/images/generations';
+                    const API_KEY = '';
+                    const requestBody = JSON.stringify({
+                        model: this.model,
+                        prompt: this.prompt,
+                        n: 1,
+                        size: this.size
+                    });
+
+
+                    fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${API_KEY}`
+                        },
+                        body: requestBody
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.imageUrl = data.data[0].url;
+                        this.showResult = true;
+                        this.isLoading = false;
+                        document.querySelector('button[type="submit"]').disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while processing your request.');
+                        this.isLoading = false;
+                        document.querySelector('button[type="submit"]').disabled = false;
+                    });
+                }
+            }
+        });
+
+        document.getElementById('themeSwitch').addEventListener('change', function(event) {
+            document.body.style.setProperty(
+                '--background-color',
+                event.target.checked ? 'var(--dark-background-color)' : 'var(--light-background-color)'
+            );
+
+            document.body.style.setProperty(
+                '--text-color',
+                event.target.checked ? 'var(--dark-text-color)' : 'var(--light-text-color)'
+            );
+
+            document.body.style.setProperty(
+                '--element-color',
+                event.target.checked ? 'var(--dark-element-color)' : 'var(--light-element-color)'
+            );
+        });
+    </script>
+</body>
+</html>
+

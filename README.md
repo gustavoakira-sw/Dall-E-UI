@@ -34,7 +34,7 @@ This is a user interface (UI) for interacting with the Dall-E model to generate 
 
 ## API Integration
 
-The UI integrates with the OpenAI API to send prompts and receive image responses from the Dall-E model. To use the API, you need to obtain an API key from OpenAI and replace the `API_KEY` variable in the JavaScript code (`index.html`) with your actual API key.
+The UI integrates with the OpenAI API to send prompts and receive image responses from the Dall-E model. To use the API, you need to obtain an API key from OpenAI and replace the `API_KEY` variable in the JavaScript code with your actual API key. [https://github.com/gustavoakira-sw/Dall-E-UI/blob/5f7d4b584a95309b879e082d0e93d438ce3e5207/index.html#L179](You can find this in line 179.)
 
 ## Resources
 
